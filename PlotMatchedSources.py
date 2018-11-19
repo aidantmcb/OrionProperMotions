@@ -189,11 +189,11 @@ with PdfPages('ProxPlots.pdf') as pdf:
 
             axs.xaxis.set_ticks(np.arange(xstops[0], xstops[1], arcsec*.1), True)
             axs.xaxis.set_ticks(xstops, False)
-            axs.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.1f'))
+            axs.xaxis.set_major_formatter(ticker.FormatStrFormatter('%0.4f' + ' Degrees'))
 
             axs.yaxis.set_ticks(np.arange(ystops[0], ystops[1], arcsec*.1), True)
             axs.yaxis.set_ticks(ystops, False)
-            axs.yaxis.set_major_formatter(ticker.FormatStrFormatter('%0.1f'))
+            axs.yaxis.set_major_formatter(ticker.FormatStrFormatter('%0.4f' + ' Degrees'))
 
             axs.set_aspect('equal')
             pdf.savefig()
