@@ -82,8 +82,6 @@ iind = np.flip(iind,0)
 
 ta = Table([tts, np.array(iind)], names = ('times', 'inds'), meta = {'name': 'IndTable'})
 ta.remove_rows(slice(0,4))
-tts = ta['times']
-iinds = ta['inds']
 
 ################################################################################
 #Now match them up by distance:
@@ -126,31 +124,49 @@ for mm in range(len(ta)):
 #Remove all redundant pairs
 ################################################################################
 
-checkoutPairs = []
-remRows = []
+flattened = []
+timesflat = []
+for ind in range(len(ta['inds'])):
+    entry = ta['inds'][ind]
+    tt = ta['times'][ind]
+    for i in entry:
+        timesflat.append(tt)
+        flattened.append(i)
 
-for nn in range(len(ta)):
-    checks = ta['inds'][nn]
-    checkstrs = [str(cc) for cc in checks]
-    #print(checkstrs)
-    if set(checkstrs).issubset(set(checkoutPairs)):
-        remRows.append(nn)
-    else:
-        keepvals = []
-        for i in range(len(checkstrs)):
-            if checkstrs[i] not in checkoutPairs:
-                keepvals.append(checks[i])
-            checkoutPairs.append(checkstrs[i])
-        ta['inds'][nn] = keepvals
-ta.remove_rows(remRows)
+tab = Table([timesflat, np.array(flattened)], names = ('times', 'ind'), meta = {'name': 'UpdatedTable'})
 
+datlist = tab['ind']
+tilist = tab['times']
+checklist = np.array([str(cc) for cc in flattened])
+
+selectRows = []
+for entry in checklist:
+    b = np.where(checklist == entry)[0]
+    dlist = []
+    for i in b:
+        indPairs = datlist[i]
+        ra_b, dec_b = getCoords(ra[indPairs], dec[indPairs], pmra[indPairs], pmdec[indPairs], tilist[i])[0:2]
+        ds = dist(ra_b, dec_b)[0][1]
+        dlist.append(ds)
+    selector = np.argmin(dlist)
+    cval = b[selector]
+    selectRows.append(int(cval))
+
+selectRows = list(set(selectRows))
+selectRows.sort()
+
+tabtimes = [tilist[i] for i in selectRows]
+tabinds = [[datlist[i]] for i in selectRows]
+
+tabl = Table([tabtimes, tabinds], names = ('Time', 'Indices'), meta = {'name': 'SortedVals'})
+#tabl.show_in_browser()
+print(tabl)
 ################################################################################
 #Now we can make our plots
 ################################################################################
 
-
 def getBox(ras, decs, pmras, pmdecs):
-    maxDist = np.max([np.max(abs(pmras)),np.max(abs(pmdecs))])* 100
+    maxDist = np.max([np.max(abs(pmras)),np.max(abs(pmdecs))]) * 100
 
 
     xmin = np.mean(ras) - arcsec/2 - maxDist
@@ -162,11 +178,10 @@ def getBox(ras, decs, pmras, pmdecs):
     return ([xmin, xmax], [ymin, ymax])
 
 
-
 with PdfPages('ProxPlots.pdf') as pdf:
-    for i in range(len(ta)): #DO NOT FORGET this is a small selection
-        currentInd = ta['inds'][i]
-        currentT = ta['times'][i]
+    for i in range(len(tabl)): #DO NOT FORGET this is a small selection
+        currentInd = tabl['Indices'][i]
+        currentT = tabl['Time'][i]
         tiCo = getCoords(ra, dec, pmra, pmdec, currentT)
         for pair in currentInd:
             fig, axs = plt.subplots(figsize = (14,14))
@@ -198,3 +213,5 @@ with PdfPages('ProxPlots.pdf') as pdf:
             axs.set_aspect('equal')
             pdf.savefig()
             plt.close()
+
+#VizierSearch to join tables
