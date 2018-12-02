@@ -81,7 +81,7 @@ iind = np.flip(iind,0)
 
 
 ta = Table([tts, np.array(iind)], names = ('times', 'inds'), meta = {'name': 'IndTable'})
-ta.remove_rows(slice(0,4))
+#ta.remove_rows(slice(0,4)) 
 
 ################################################################################
 #Now match them up by distance:
